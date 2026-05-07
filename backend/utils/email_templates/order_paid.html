@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="status-icon">✅</div>
+<p class="greeting">¡Pago confirmado, {{ buyer_name }}!</p>
+<p class="text">Tu pago fue aprobado y tu pedido ya está en manos del vendedor. Te avisaremos cuando sea despachado.</p>
+
+<div class="card">
+  <div class="card-row">
+    <span class="label">Número de orden</span>
+    <span class="value">#{{ order_id }}</span>
+  </div>
+  <div class="card-row">
+    <span class="label">Estado</span>
+    <span class="value"><span class="badge badge-green">Pagado</span></span>
+  </div>
+  <div class="card-row">
+    <span class="label">Dirección de envío</span>
+    <span class="value">{{ shipping_address }}, {{ shipping_city }}</span>
+  </div>
+</div>
+
+<p class="text" style="font-weight:600; margin-top:8px;">Artículos de tu pedido:</p>
+<div class="card">
+  {% for item in items %}
+  <div class="card-row">
+    <span class="label">{{ item.title }} · talle {{ item.size }} x{{ item.quantity }}</span>
+    <span class="value">${{ item.subtotal }}</span>
+  </div>
+  {% endfor %}
+  <div class="total-row">
+    <span>Total</span>
+    <span>${{ total }}</span>
+  </div>
+</div>
+
+<div style="text-align:center;">
+  <a href="{{ frontend_url }}/perfil/ordenes/{{ order_id }}" class="btn">Ver mi pedido</a>
+</div>
+{% endblock %}

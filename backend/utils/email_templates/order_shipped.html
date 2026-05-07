@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="status-icon">🚚</div>
+<p class="greeting">¡Tu pedido está en camino, {{ buyer_name }}!</p>
+<p class="text">El vendedor acaba de despachar tu pedido. Podés seguir el envío con los datos que aparecen abajo.</p>
+
+<div class="card">
+  <div class="card-row">
+    <span class="label">Número de orden</span>
+    <span class="value">#{{ order_id }}</span>
+  </div>
+  <div class="card-row">
+    <span class="label">Estado</span>
+    <span class="value"><span class="badge badge-purple">En camino</span></span>
+  </div>
+  {% if carrier %}
+  <div class="card-row">
+    <span class="label">Transportista</span>
+    <span class="value">{{ carrier }}</span>
+  </div>
+  {% endif %}
+  {% if tracking_number %}
+  <div class="card-row">
+    <span class="label">Número de seguimiento</span>
+    <span class="value" style="font-family:monospace;">{{ tracking_number }}</span>
+  </div>
+  {% endif %}
+  {% if estimated_delivery %}
+  <div class="card-row">
+    <span class="label">Entrega estimada</span>
+    <span class="value">{{ estimated_delivery }}</span>
+  </div>
+  {% endif %}
+  <div class="card-row">
+    <span class="label">Dirección</span>
+    <span class="value">{{ shipping_address }}, {{ shipping_city }}</span>
+  </div>
+</div>
+
+<div style="text-align:center;">
+  <a href="{{ frontend_url }}/perfil/ordenes/{{ order_id }}" class="btn">Seguir mi pedido</a>
+</div>
+
+<hr class="divider" />
+<p class="text" style="font-size:13px; color:#9ca3af;">
+  Si tenés algún problema con el envío, contactá al vendedor respondiendo este correo.
+</p>
+{% endblock %}

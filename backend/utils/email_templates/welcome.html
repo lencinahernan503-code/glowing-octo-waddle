@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="status-icon">👋</div>
+<p class="greeting">¡Bienvenido/a a TiendaRopa, {{ full_name }}!</p>
+<p class="text">Tu cuenta fue creada exitosamente. Ya podés empezar a explorar miles de prendas de vendedores de todo el país.</p>
+
+<div class="card">
+  <div class="card-row">
+    <span class="label">Email</span>
+    <span class="value">{{ email }}</span>
+  </div>
+  <div class="card-row">
+    <span class="label">Tipo de cuenta</span>
+    <span class="value">
+      {% if role == "seller" %}
+        <span class="badge badge-blue">Vendedor</span>
+      {% else %}
+        <span class="badge badge-orange">Comprador</span>
+      {% endif %}
+    </span>
+  </div>
+</div>
+
+{% if role == "seller" %}
+<p class="text">Como vendedor, ya podés publicar tus primeros productos desde tu panel de tienda.</p>
+<div style="text-align:center;">
+  <a href="{{ frontend_url }}/vendedor/nuevo" class="btn">Publicar mi primer producto</a>
+</div>
+{% else %}
+<p class="text">Explorá el catálogo y encontrá lo que estás buscando.</p>
+<div style="text-align:center;">
+  <a href="{{ frontend_url }}" class="btn">Empezar a comprar</a>
+</div>
+{% endif %}
+{% endblock %}
