@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SECRET_KEY
+        value: vendi-secret-key-produccion-2024
+      - key: ALLOWED_ORIGINS
+        value: https://frontend-amber-ten-79.vercel.app,http://localhost:3000
+      - key: FRONTEND_URL
+        value: https://frontend-amber-ten-79.vercel.app
+      - key: EMAILS_ENABLED
+        value: "false"
