@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   store_name?: string;
   avatar_url?: string;
+  is_active?: boolean;
   created_at: string;
 }
 
@@ -67,6 +68,7 @@ export interface Order {
   shipping_province: string;
   shipping_zip: string;
   mp_preference_id?: string;
+  mp_payment_id?: string;
   notes?: string;
   created_at: string;
   items: OrderItem[];

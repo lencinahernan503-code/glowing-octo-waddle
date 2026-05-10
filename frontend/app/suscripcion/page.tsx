@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, CheckCircle, Star, Package, MessageCircle, TrendingUp, Crown } from "lucide-react";
 
 interface Subscription {
@@ -21,6 +22,7 @@ const BENEFITS = [
 
 export default function SuscripcionPage() {
   const router = useRouter();
+  const { user, setUser } = useAuth();
   const [sub, setSub] = useState<Subscription | null>(null);
   const [active, setActive] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,9 @@ export default function SuscripcionPage() {
       const { data } = await api.post("/subscriptions/subscribe");
       setSub(data);
       setActive(true);
+      if (user && user.role === "buyer") {
+        setUser({ ...user, role: "seller" });
+      }
       setSuccess(true);
     } catch (err: any) {
       alert(err.response?.data?.detail || "Error al procesar la suscripción");

@@ -36,7 +36,7 @@ export default function LoginPage() {
           <ArrowLeft size={18} className="text-gray-700" />
         </button>
         <div className="mb-2">
-          <span className="text-3xl font-black text-primary-600">Vendi</span>
+          <span className="text-3xl font-black text-primary-600">Feriant</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">Iniciar sesión</h1>
         <p className="text-gray-400 mt-1">Bienvenido/a de vuelta</p>

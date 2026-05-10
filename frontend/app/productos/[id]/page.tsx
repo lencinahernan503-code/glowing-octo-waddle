@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { Product } from "@/types";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, MoreVertical, Star, MessageCircle, ShoppingBag } from "lucide-react";
+import { ArrowLeft, MoreVertical, Star, MessageCircle, ShoppingBag, Share2, Link2, Check } from "lucide-react";
 import FavoriteButton from "@/components/ui/FavoriteButton";
 import ReviewList from "@/components/productos/ReviewList";
 import OfferModal from "@/components/ui/OfferModal";
@@ -24,6 +24,7 @@ export default function ProductPage() {
   const [added, setAdded] = useState(false);
   const [offerOpen, setOfferOpen] = useState(false);
   const [offerSent, setOfferSent] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { add } = useCart();
   const { user, hydrate } = useAuth();
   const router = useRouter();
@@ -179,12 +180,38 @@ export default function ProductPage() {
           </div>
         )}
 
-        {/* Consultar */}
-        <Link href={`/mensajes/${product.seller_id}?product=${product.id}`}
-          className="flex items-center gap-2 text-sm text-primary-600 font-semibold">
-          <MessageCircle size={16} />
-          Consultar al vendedor
-        </Link>
+        {/* Acciones secundarias */}
+        <div className="flex items-center gap-4">
+          <Link href={`/mensajes/${product.seller_id}?product=${product.id}`}
+            className="flex items-center gap-2 text-sm text-primary-600 font-semibold">
+            <MessageCircle size={16} />
+            Consultar al vendedor
+          </Link>
+          <div className="flex items-center gap-3 ml-auto">
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/productos/${product.id}`;
+                navigator.clipboard.writeText(url).then(() => {
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                });
+              }}
+              className="flex items-center gap-1.5 text-sm text-gray-500 font-semibold">
+              {copied ? <Check size={15} className="text-green-500" /> : <Link2 size={15} />}
+              {copied ? "Copiado" : "Copiar link"}
+            </button>
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/productos/${product.id}`;
+                const text = `Mirá este producto en Feriant: ${product.title} — $${product.price.toLocaleString("es-AR")}\n${url}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+              }}
+              className="flex items-center gap-1.5 text-sm text-green-600 font-semibold">
+              <Share2 size={15} />
+              WhatsApp
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Reseñas */}

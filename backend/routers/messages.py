@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, func
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from core.database import get_db
 from core.deps import get_current_user
 from models.user import User
 from models.message import Message
 from models.product import Product
+from routers.notifications import create_notification
 from pydantic import BaseModel
-from typing import Optional
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
@@ -81,6 +81,13 @@ def send_message(
         content=data.content.strip(),
     )
     db.add(msg)
+    db.flush()
+    create_notification(
+        db, data.receiver_id, "message",
+        f"Nuevo mensaje de {current_user.full_name}",
+        data.content[:80],
+        f"/mensajes/{current_user.id}",
+    )
     db.commit()
     db.refresh(msg)
     return _msg_to_out(msg)

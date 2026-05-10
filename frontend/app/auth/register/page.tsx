@@ -38,7 +38,7 @@ export default function RegisterPage() {
           <ArrowLeft size={18} className="text-gray-700" />
         </button>
         <div className="mb-2">
-          <span className="text-3xl font-black text-primary-600">Vendi</span>
+          <span className="text-3xl font-black text-primary-600">Feriant</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">Crear cuenta</h1>
         <p className="text-gray-400 mt-1">Es gratis y solo lleva un minuto</p>

@@ -8,6 +8,7 @@ from models.product import Product
 from models.offer import Offer, OfferStatus
 from models.message import Message
 from schemas.offer import OfferCreate, OfferRespond, OfferOut
+from routers.notifications import create_notification
 
 router = APIRouter(prefix="/offers", tags=["offers"])
 
@@ -86,6 +87,14 @@ def create_offer(
         product_id=data.product_id,
     )
     db.add(msg)
+
+    create_notification(
+        db, product.seller_id, "offer",
+        f"Nueva oferta de {current_user.full_name}",
+        f"${data.amount:,.0f} por '{product.title}'",
+        "/ofertas",
+    )
+
     db.commit()
 
     return _to_out(offer)
@@ -153,6 +162,15 @@ def respond_offer(
         product_id=offer.product_id,
     )
     db.add(msg)
+
+    label = "aceptó" if data.status == OfferStatus.accepted else "rechazó"
+    create_notification(
+        db, offer.buyer_id, "offer_response",
+        f"Tu oferta fue {label}",
+        f"{current_user.full_name} {label} tu oferta por '{offer.product.title}'",
+        "/ofertas",
+    )
+
     db.commit()
 
     return _to_out(offer)

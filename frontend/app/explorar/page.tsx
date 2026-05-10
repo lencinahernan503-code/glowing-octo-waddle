@@ -34,10 +34,15 @@ const SORT_OPTIONS = [
   { value: "rating",     label: "Mejor valorado" },
 ];
 
+const PAGE_SIZE = 12;
+
 function ExplorarContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
+  const [skip, setSkip] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [activeTab, setActiveTab] = useState(
     TABS.find(t => t.value === searchParams.get("categoria")) || TABS[0]
@@ -45,35 +50,55 @@ function ExplorarContent() {
   const [sort, setSort] = useState("newest");
   const [showSort, setShowSort] = useState(false);
   const [condition, setCondition] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [showPriceFilter, setShowPriceFilter] = useState(false);
 
-  const fetchProducts = useCallback(async (
-    search: string,
-    tab: FilterTab,
-    sortBy: string,
-    cond: string,
-  ) => {
-    setLoading(true);
-    const params: Record<string, string> = { sort: sortBy };
+  const buildParams = useCallback((search: string, tab: FilterTab, sortBy: string, cond: string, offset: number, minP: string, maxP: string) => {
+    const params: Record<string, string | number> = { sort: sortBy, limit: PAGE_SIZE, skip: offset };
     if (search.trim()) params.search = search.trim();
     if (tab.value) params[tab.param] = tab.value;
     if (cond) params.condition = cond;
+    if (minP) params.min_price = minP;
+    if (maxP) params.max_price = maxP;
+    return params;
+  }, []);
+
+  const fetchProducts = useCallback(async (
+    search: string, tab: FilterTab, sortBy: string, cond: string, minP: string, maxP: string,
+  ) => {
+    setLoading(true);
+    setSkip(0);
     try {
-      const { data } = await api.get("/products", { params });
-      setProducts(data);
+      const { data } = await api.get("/products", { params: buildParams(search, tab, sortBy, cond, 0, minP, maxP) });
+      setProducts(data.items ?? data);
+      setTotal(data.total ?? 0);
     } catch {
       setProducts([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [buildParams]);
 
-  // Búsqueda en tiempo real con debounce
+  const loadMore = async () => {
+    const newSkip = skip + PAGE_SIZE;
+    setLoadingMore(true);
+    try {
+      const { data } = await api.get("/products", { params: buildParams(query, activeTab, sort, condition, newSkip, minPrice, maxPrice) });
+      setProducts(prev => [...prev, ...(data.items ?? [])]);
+      setSkip(newSkip);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchProducts(query, activeTab, sort, condition);
+      fetchProducts(query, activeTab, sort, condition, minPrice, maxPrice);
     }, 300);
     return () => clearTimeout(timer);
-  }, [query, activeTab, sort, condition, fetchProducts]);
+  }, [query, activeTab, sort, condition, minPrice, maxPrice, fetchProducts]);
 
   const clearSearch = () => setQuery("");
 
@@ -121,26 +146,30 @@ function ExplorarContent() {
 
       <div className="px-4 pt-3">
         {/* Filtros rápidos */}
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           {/* Condición */}
           <div className="flex gap-1.5 flex-1">
             {["", "nuevo", "usado"].map((c) => (
-              <button key={c}
-                onClick={() => setCondition(c)}
+              <button key={c} onClick={() => setCondition(c)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
-                  condition === c
-                    ? "border-primary-600 bg-primary-600 text-white"
-                    : "border-gray-200 bg-white text-gray-600"
+                  condition === c ? "border-primary-600 bg-primary-600 text-white" : "border-gray-200 bg-white text-gray-600"
                 }`}>
                 {c === "" ? "Todos" : c === "nuevo" ? "Nuevo" : "Usado"}
               </button>
             ))}
           </div>
 
+          {/* Precio */}
+          <button onClick={() => setShowPriceFilter(p => !p)}
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+              minPrice || maxPrice ? "border-primary-600 bg-primary-600 text-white" : "border-gray-200 bg-white text-gray-600"
+            }`}>
+            $ Precio
+          </button>
+
           {/* Sort */}
           <div className="relative">
-            <button
-              onClick={() => setShowSort(!showSort)}
+            <button onClick={() => setShowSort(!showSort)}
               className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border border-gray-200 bg-white text-gray-600">
               <SlidersHorizontal size={11} />
               {currentSortLabel}
@@ -149,12 +178,9 @@ function ExplorarContent() {
             {showSort && (
               <div className="absolute right-0 top-8 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden z-30 w-44">
                 {SORT_OPTIONS.map((opt) => (
-                  <button key={opt.value}
-                    onClick={() => { setSort(opt.value); setShowSort(false); }}
+                  <button key={opt.value} onClick={() => { setSort(opt.value); setShowSort(false); }}
                     className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
-                      sort === opt.value
-                        ? "bg-primary-50 text-primary-700 font-bold"
-                        : "text-gray-700 hover:bg-gray-50"
+                      sort === opt.value ? "bg-primary-50 text-primary-700 font-bold" : "text-gray-700 hover:bg-gray-50"
                     }`}>
                     {opt.label}
                   </button>
@@ -163,6 +189,26 @@ function ExplorarContent() {
             )}
           </div>
         </div>
+
+        {/* Panel precio */}
+        {showPriceFilter && (
+          <div className="flex items-center gap-2 mb-2 bg-white rounded-2xl px-3 py-2 border border-gray-100">
+            <span className="text-xs text-gray-500 font-medium">$</span>
+            <input type="number" min="0" placeholder="Mín" value={minPrice}
+              onChange={e => setMinPrice(e.target.value)}
+              className="w-20 text-sm border border-gray-200 rounded-xl px-2 py-1 outline-none focus:border-primary-400" />
+            <span className="text-xs text-gray-400">—</span>
+            <input type="number" min="0" placeholder="Máx" value={maxPrice}
+              onChange={e => setMaxPrice(e.target.value)}
+              className="w-20 text-sm border border-gray-200 rounded-xl px-2 py-1 outline-none focus:border-primary-400" />
+            {(minPrice || maxPrice) && (
+              <button onClick={() => { setMinPrice(""); setMaxPrice(""); }}
+                className="ml-auto text-xs text-gray-400 hover:text-red-500 font-semibold">
+                Limpiar
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Resultados */}
         {loading ? (
@@ -190,7 +236,7 @@ function ExplorarContent() {
             )}
             {(query || activeTab.value || condition) && (
               <button
-                onClick={() => { setQuery(""); setActiveTab(TABS[0]); setCondition(""); }}
+                onClick={() => { setQuery(""); setActiveTab(TABS[0]); setCondition(""); setMinPrice(""); setMaxPrice(""); }}
                 className="mt-4 text-primary-600 font-semibold text-sm underline">
                 Limpiar filtros
               </button>
@@ -199,12 +245,20 @@ function ExplorarContent() {
         ) : (
           <>
             <p className="text-xs text-gray-400 mb-3 font-medium">
-              {products.length} {products.length === 1 ? "producto" : "productos"}
+              {total} {total === 1 ? "producto" : "productos"}
               {query && <span> para &quot;<span className="font-semibold text-gray-600">{query}</span>&quot;</span>}
             </p>
             <div className="grid grid-cols-2 gap-3">
               {products.map((p) => <ProductCard key={p.id} product={p} />)}
             </div>
+            {products.length < total && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full mt-4 py-3 rounded-2xl border-2 border-primary-200 text-primary-600 font-bold text-sm hover:bg-primary-50 transition-colors disabled:opacity-50">
+                {loadingMore ? "Cargando..." : `Cargar más (${total - products.length} restantes)`}
+              </button>
+            )}
           </>
         )}
       </div>

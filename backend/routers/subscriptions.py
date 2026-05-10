@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from core.database import get_db
 from core.deps import get_current_user, require_seller
-from models.user import User
+from models.user import User, UserRole
 from models.subscription import Subscription, SubscriptionStatus
 from schemas.subscription import SubscriptionOut, SUBSCRIPTION_PRICE, SUBSCRIPTION_DAYS
 
@@ -14,7 +14,7 @@ def get_active_subscription(user_id: int, db: Session):
     return db.query(Subscription).filter(
         Subscription.user_id == user_id,
         Subscription.status == SubscriptionStatus.active,
-        Subscription.end_date > datetime.now(timezone.utc),
+        Subscription.end_date > datetime.utcnow(),
     ).first()
 
 
@@ -29,17 +29,22 @@ def my_subscription(
 
     active = (
         sub.status == SubscriptionStatus.active
-        and sub.end_date > datetime.now(timezone.utc)
+        and sub.end_date > datetime.utcnow()
     )
     return {"active": active, "subscription": SubscriptionOut.model_validate(sub)}
 
 
 @router.post("/subscribe", response_model=SubscriptionOut)
 def subscribe(
-    current_user: User = Depends(require_seller),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
+
+    # Promote buyer to seller automatically when subscribing
+    if current_user.role == UserRole.buyer:
+        current_user.role = UserRole.seller
+
     existing = db.query(Subscription).filter(Subscription.user_id == current_user.id).first()
 
     if existing:

@@ -27,8 +27,9 @@ export default function HomePage() {
   useEffect(() => {
     api.get("/products", { params: { limit: 12, sort: "newest" } })
       .then(({ data }) => {
-        setFeatured(data.slice(0, 5));
-        setProducts(data.slice(5));
+        const items = data.items ?? data;
+        setFeatured(items.slice(0, 5));
+        setProducts(items.slice(5));
       })
       .finally(() => setLoading(false));
   }, []);

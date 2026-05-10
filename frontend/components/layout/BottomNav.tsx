@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, Plus, MessageCircle, User } from "lucide-react";
+import { Home, Search, Plus, MessageCircle, User, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useEffect, useState } from "react";
@@ -27,11 +27,29 @@ function useUnreadMessages(userId: number | undefined) {
   return count;
 }
 
+function useUnreadNotifications(userId: number | undefined) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!userId) return;
+    const fetch = () =>
+      api.get("/notifications/unread-count")
+        .then(({ data }) => setCount(data.count || 0))
+        .catch(() => {});
+    fetch();
+    const interval = setInterval(fetch, 30000);
+    return () => clearInterval(interval);
+  }, [userId]);
+
+  return count;
+}
+
 export default function BottomNav() {
   const pathname = usePathname();
   const { user } = useAuth();
   const cartCount = useCart((s) => s.items.length);
-  const unread = useUnreadMessages(user?.id);
+  const unreadMsgs = useUnreadMessages(user?.id);
+  const unreadNotifs = useUnreadNotifications(user?.id);
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";
@@ -42,7 +60,8 @@ export default function BottomNav() {
     { href: "/", icon: Home, label: "Inicio" },
     { href: "/explorar", icon: Search, label: "Explorar" },
     { href: user?.role === "seller" ? "/vendedor/nuevo" : "/auth/login", icon: Plus, label: "Vender", isCenter: true },
-    { href: "/mensajes", icon: MessageCircle, label: "Mensajes", badge: unread },
+    { href: "/mensajes", icon: MessageCircle, label: "Mensajes", badge: unreadMsgs },
+    { href: "/notificaciones", icon: Bell, label: "Notifs", badge: unreadNotifs },
     { href: "/perfil", icon: User, label: "Perfil", badge: cartCount > 0 && pathname !== "/carrito" ? cartCount : 0 },
   ];
 

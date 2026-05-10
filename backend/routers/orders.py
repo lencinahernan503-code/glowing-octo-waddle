@@ -7,6 +7,7 @@ from models.user import User
 from models.product import Product, ProductSize
 from models.order import Order, OrderItem, OrderStatus
 from schemas.order import OrderCreate, OrderOut
+from routers.notifications import create_notification
 import mercadopago
 from core.config import settings
 
@@ -82,8 +83,18 @@ def create_order(
         if preference["status"] == 201:
             order.mp_preference_id = preference["response"]["id"]
     else:
-        # Sin MercadoPago configurado: marcar como pagado automáticamente (modo prueba)
         order.status = OrderStatus.paid
+
+    # Notificar a cada vendedor involucrado
+    seller_ids = {product.seller_id for product, _, _ in items_data}
+    for seller_id in seller_ids:
+        seller_items = [p.title for p, _, _ in items_data if p.seller_id == seller_id]
+        create_notification(
+            db, seller_id, "sale",
+            "¡Nueva venta!",
+            f"{current_user.full_name} compró: {', '.join(seller_items)}",
+            "/vendedor/ventas",
+        )
 
     db.commit()
     db.refresh(order)

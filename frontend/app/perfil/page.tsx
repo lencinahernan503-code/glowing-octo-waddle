@@ -1,18 +1,45 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { api } from "@/lib/api";
+import Image from "next/image";
 import {
   ShoppingBag, Heart, Settings, HelpCircle, LogOut,
-  ChevronRight, Star, Shield, Store, Truck, Tag, Package, TrendingUp
+  ChevronRight, Star, Shield, Store, Truck, Tag, Package, TrendingUp, Camera
 } from "lucide-react";
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function ProfilePage() {
   const { user, logout, hydrate } = useAuth();
   const router = useRouter();
+  const [sellerStats, setSellerStats] = useState<{ rating: number | null; review_count: number } | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => { hydrate(); }, [hydrate]);
+
+  useEffect(() => {
+    if (user?.role === "seller") {
+      api.get(`/sellers/${user.id}`).then(r => {
+        setSellerStats({ rating: r.data.rating, review_count: r.data.review_count });
+      }).catch(() => {});
+    }
+  }, [user]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      await api.post("/auth/avatar", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      hydrate();
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -68,9 +95,17 @@ export default function ProfilePage() {
 
         {/* Avatar + info */}
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-primary-600 text-white flex items-center justify-center text-xl font-black shadow-lg shadow-primary-200">
-            {initials}
-          </div>
+          <label className="relative cursor-pointer group">
+            <div className="w-16 h-16 rounded-full bg-primary-600 text-white flex items-center justify-center text-xl font-black shadow-lg shadow-primary-200 overflow-hidden">
+              {user.avatar_url ? (
+                <Image src={`${API}${user.avatar_url}`} alt={user.full_name} fill className="object-cover rounded-full" sizes="64px" />
+              ) : initials}
+            </div>
+            <div className={`absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${uploadingAvatar ? "opacity-100" : ""}`}>
+              <Camera size={18} className="text-white" />
+            </div>
+            <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+          </label>
           <div className="flex-1">
             <h2 className="text-lg font-black text-gray-900">{user.full_name}</h2>
             <p className="text-sm text-gray-400">{user.email}</p>
@@ -82,9 +117,13 @@ export default function ProfilePage() {
             <div className="text-center">
               <div className="flex items-center gap-1">
                 <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                <span className="font-bold text-sm text-gray-800">4.8</span>
+                <span className="font-bold text-sm text-gray-800">
+                  {sellerStats?.rating != null ? sellerStats.rating.toFixed(1) : "—"}
+                </span>
               </div>
-              <p className="text-xs text-gray-400">reputación</p>
+              <p className="text-xs text-gray-400">
+                {sellerStats ? `${sellerStats.review_count} reseñas` : "reputación"}
+              </p>
             </div>
           )}
         </div>
@@ -113,7 +152,7 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      <p className="text-center text-xs text-gray-300 mt-6 pb-4">Vendi v1.0 · Tu estilo, tu precio</p>
+      <p className="text-center text-xs text-gray-300 mt-6 pb-4">Feriant v1.0 · Tu estilo, tu precio</p>
     </div>
   );
 }

@@ -8,6 +8,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   becomeSeller: (storeName: string, storeDescription?: string) => Promise<void>;
+  setUser: (user: User) => void;
   logout: () => void;
   hydrate: () => void;
 }
@@ -52,6 +53,11 @@ export const useAuth = create<AuthState>((set) => ({
     localStorage.setItem("token", data.access_token);
     localStorage.setItem("user", JSON.stringify(data.user));
     set({ token: data.access_token, user: data.user });
+  },
+
+  setUser: (user) => {
+    localStorage.setItem("user", JSON.stringify(user));
+    set({ user });
   },
 
   logout: () => {

@@ -4,11 +4,11 @@ from fastapi.staticfiles import StaticFiles
 import os
 from core.database import engine, Base
 from core.config import settings
-from routers import auth, products, orders, shipments, webhooks, admin, reviews, sellers, favorites, messages, offers, subscriptions
+from routers import auth, products, orders, shipments, webhooks, admin, reviews, sellers, favorites, messages, offers, subscriptions, notifications
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Tienda Ropa API", version="1.0.0")
+app = FastAPI(title="Feriant API", version="1.0.0")
 
 origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
@@ -34,6 +34,7 @@ app.include_router(favorites.router)
 app.include_router(messages.router)
 app.include_router(offers.router)
 app.include_router(subscriptions.router)
+app.include_router(notifications.router)
 
 
 @app.get("/health")

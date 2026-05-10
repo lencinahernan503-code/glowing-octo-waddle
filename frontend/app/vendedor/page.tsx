@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Product } from "@/types";
 import Image from "next/image";
-import { Plus, Eye, EyeOff, Package, TrendingUp, ArrowLeft, ShoppingBag } from "lucide-react";
+import { Plus, Eye, EyeOff, Package, TrendingUp, ArrowLeft, ShoppingBag, Pencil, Trash2 } from "lucide-react";
 
 export default function SellerDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -21,6 +22,17 @@ export default function SellerDashboard() {
   const toggleActive = async (p: Product) => {
     await api.patch(`/products/${p.id}`, { is_active: !p.is_active });
     setProducts((prev) => prev.map((x) => x.id === p.id ? { ...x, is_active: !x.is_active } : x));
+  };
+
+  const deleteProduct = async (p: Product) => {
+    if (!confirm(`¿Eliminar "${p.title}"? Esta acción no se puede deshacer.`)) return;
+    setDeleting(p.id);
+    try {
+      await api.delete(`/products/${p.id}`);
+      setProducts((prev) => prev.filter((x) => x.id !== p.id));
+    } finally {
+      setDeleting(null);
+    }
   };
 
   const active = products.filter(p => p.is_active).length;
@@ -131,11 +143,15 @@ export default function SellerDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Link href={`/productos/${p.id}`} className="text-gray-300 hover:text-gray-500">
-                    <Eye size={18} />
+                  <Link href={`/vendedor/editar/${p.id}`} className="text-gray-300 hover:text-primary-600">
+                    <Pencil size={18} />
                   </Link>
                   <button onClick={() => toggleActive(p)} className="text-gray-300 hover:text-primary-600">
                     {p.is_active ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                  <button onClick={() => deleteProduct(p)} disabled={deleting === p.id}
+                    className="text-gray-300 hover:text-red-500 disabled:opacity-40">
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>

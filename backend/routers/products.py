@@ -16,7 +16,7 @@ from schemas.product import ProductCreate, ProductUpdate, ProductOut
 router = APIRouter(prefix="/products", tags=["products"])
 
 
-@router.get("/", response_model=List[ProductOut])
+@router.get("/")
 def list_products(
     category: Optional[ProductCategory] = None,
     gender: Optional[ProductGender] = None,
@@ -70,7 +70,9 @@ def list_products(
     else:
         query = query.order_by(Product.created_at.desc())
 
-    return query.distinct().offset(skip).limit(limit).all()
+    total = query.distinct().count()
+    items = query.distinct().offset(skip).limit(limit).all()
+    return {"items": [ProductOut.model_validate(p) for p in items], "total": total, "skip": skip, "limit": limit}
 
 
 @router.get("/{product_id}", response_model=ProductOut)

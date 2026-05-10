@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, File
 from sqlalchemy.orm import Session
+import os, uuid
 from core.database import get_db
 from core.security import hash_password, verify_password, create_access_token
 from core.deps import get_current_user
+from core.config import settings
 from models.user import User, UserRole
 from schemas.user import UserCreate, UserLogin, UserOut, Token, BecomeSeller
 from utils.email_service import send_welcome_email
@@ -52,6 +54,30 @@ def become_seller(
 
     token = create_access_token({"sub": str(current_user.id), "role": current_user.role})
     return Token(access_token=token, user=UserOut.model_validate(current_user))
+
+
+@router.post("/avatar", response_model=UserOut)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    allowed = {"image/jpeg", "image/png", "image/webp"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Solo se aceptan imágenes JPG, PNG o WebP")
+    ext = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "jpg"
+    filename = f"avatar_{current_user.id}_{uuid.uuid4().hex[:8]}.{ext}"
+    path = os.path.join(settings.UPLOAD_DIR, filename)
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    contents = await file.read()
+    if len(contents) > settings.MAX_IMAGE_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=400, detail=f"Imagen demasiado grande (máx {settings.MAX_IMAGE_SIZE_MB}MB)")
+    with open(path, "wb") as f:
+        f.write(contents)
+    current_user.avatar_url = f"/uploads/{filename}"
+    db.commit()
+    db.refresh(current_user)
+    return UserOut.model_validate(current_user)
 
 
 @router.post("/login", response_model=Token)

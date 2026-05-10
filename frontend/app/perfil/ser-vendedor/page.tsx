@@ -65,7 +65,7 @@ export default function SerVendedorPage() {
       <div className="px-4 pt-6 space-y-4">
         {/* Beneficios */}
         <div className="bg-primary-600 rounded-2xl p-5 text-white">
-          <p className="font-black text-lg mb-4">¿Por qué vender en Vendi?</p>
+          <p className="font-black text-lg mb-4">¿Por qué vender en Feriant?</p>
           <div className="space-y-3">
             {[
               { Icon: Tag, text: "Publicá gratis — sin comisiones hasta tu primera venta" },
@@ -137,7 +137,7 @@ export default function SerVendedorPage() {
         </form>
 
         <p className="text-center text-xs text-gray-400 px-4">
-          Al continuar aceptás los términos de Vendi. Tu rol cambiará de Comprador a Vendedor.
+          Al continuar aceptás los términos de Feriant. Tu rol cambiará de Comprador a Vendedor.
         </p>
       </div>
     </div>
