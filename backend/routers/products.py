@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional, Literal
 from datetime import datetime, timezone
-import os, shutil, uuid
+import os, shutil, uuid, base64, io
+from PIL import Image
 from core.database import get_db
 from core.deps import get_current_user, require_seller
 from core.config import settings
@@ -123,7 +124,7 @@ def create_product(
 
 
 @router.post("/{product_id}/images", response_model=ProductOut)
-def upload_images(
+async def upload_images(
     product_id: int,
     files: List[UploadFile] = File(...),
     current_user: User = Depends(require_seller),
@@ -133,19 +134,20 @@ def upload_images(
     if not product:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
 
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     is_first = len(product.images) == 0
 
     for i, file in enumerate(files):
-        ext = file.filename.split(".")[-1]
-        filename = f"{uuid.uuid4()}.{ext}"
-        path = os.path.join(settings.UPLOAD_DIR, filename)
-        with open(path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+        img.thumbnail((900, 900), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=82, optimize=True)
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        data_url = f"data:image/jpeg;base64,{b64}"
 
         db.add(ProductImage(
             product_id=product.id,
-            url=f"/uploads/{filename}",
+            url=data_url,
             is_main=(is_first and i == 0),
         ))
 
