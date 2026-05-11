@@ -15,6 +15,20 @@ from schemas.order import OrderOut
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
+@router.post("/bootstrap-admin")
+def bootstrap_admin(user_id: int, db: Session = Depends(get_db)):
+    """Make first admin. Only works if no admin exists yet."""
+    existing_admin = db.query(User).filter(User.role == UserRole.admin).first()
+    if existing_admin:
+        raise HTTPException(status_code=403, detail="Ya existe un administrador")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    user.role = UserRole.admin
+    db.commit()
+    return {"detail": "Usuario promovido a administrador", "id": user.id, "email": user.email}
+
+
 # ── Dashboard ──────────────────────────────────────────────────────────────
 
 @router.get("/stats")
