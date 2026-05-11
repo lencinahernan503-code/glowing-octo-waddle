@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from core.database import get_db
 from core.deps import get_current_user, require_seller
 from models.user import User, UserRole
@@ -14,7 +14,7 @@ def get_active_subscription(user_id: int, db: Session):
     return db.query(Subscription).filter(
         Subscription.user_id == user_id,
         Subscription.status == SubscriptionStatus.active,
-        Subscription.end_date > datetime.utcnow(),
+        Subscription.end_date > datetime.now(timezone.utc),
     ).first()
 
 
@@ -29,7 +29,7 @@ def my_subscription(
 
     active = (
         sub.status == SubscriptionStatus.active
-        and sub.end_date > datetime.utcnow()
+        and sub.end_date > datetime.now(timezone.utc)
     )
     return {"active": active, "subscription": SubscriptionOut.model_validate(sub)}
 
@@ -39,7 +39,7 @@ def subscribe(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Promote buyer to seller automatically when subscribing
     if current_user.role == UserRole.buyer:
