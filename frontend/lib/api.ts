@@ -15,7 +15,14 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (res) => res,
-  (error) => {
+  async (error) => {
+    const config = error.config;
+    // Retry once on network error or 502/503 (Render cold start)
+    if (!config._retry && (!error.response || [502, 503, 504].includes(error.response?.status))) {
+      config._retry = true;
+      await new Promise((r) => setTimeout(r, 4000));
+      return api(config);
+    }
     if (error.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("token");
       window.location.href = "/auth/login";
