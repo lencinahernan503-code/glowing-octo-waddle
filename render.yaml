@@ -6,6 +6,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
+      - key: DATABASE_URL
+        value: postgresql://feriant_db_user:9siUMMa467NQrmrsGGkgHxH34mVdPn0t@dpg-d80v0htckfvc73df5vug-a/feriant_db
       - key: SECRET_KEY
         value: vendi-secret-key-produccion-2024
       - key: ALLOWED_ORIGINS
