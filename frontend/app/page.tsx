@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 import { Product } from "@/types";
 import ProductCard from "@/components/productos/ProductCard";
 import Link from "next/link";
-import { Bell, ShoppingBag, ChevronRight, Search } from "lucide-react";
+import { Bell, ShoppingBag, ChevronRight, Search, Star, Zap, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const CATEGORIES = [
@@ -166,6 +166,59 @@ export default function HomePage() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Cómo funciona */}
+        <div>
+          <h2 className="section-title mb-4">¿Cómo funciona?</h2>
+          <div className="space-y-3">
+            <div className="bg-white rounded-2xl p-4 flex items-start gap-4 border border-gray-100">
+              <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
+                <Zap size={20} className="text-primary-600" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Publicá en segundos</p>
+                <p className="text-gray-400 text-xs mt-0.5">Sacá una foto, poné el precio y listo. Sin comisiones.</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl p-4 flex items-start gap-4 border border-gray-100">
+              <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+                <Shield size={20} className="text-green-600" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Comprá seguro</p>
+                <p className="text-gray-400 text-xs mt-0.5">Cada vendedor tiene reseñas verificadas de la comunidad.</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl p-4 flex items-start gap-4 border border-gray-100">
+              <div className="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center shrink-0">
+                <Star size={20} className="text-yellow-500" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Encontrá lo que amás</p>
+                <p className="text-gray-400 text-xs mt-0.5">Miles de prendas únicas de vendedores de toda Argentina.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="bg-gradient-to-r from-primary-600 to-violet-500 rounded-2xl p-5 text-white">
+          <p className="text-xs font-semibold text-primary-200 uppercase tracking-wide mb-3">Feriant en números</p>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-2xl font-black">100%</p>
+              <p className="text-xs text-primary-200 mt-0.5">Sin comisiones</p>
+            </div>
+            <div>
+              <p className="text-2xl font-black">24hs</p>
+              <p className="text-xs text-primary-200 mt-0.5">Para publicar</p>
+            </div>
+            <div>
+              <p className="text-2xl font-black">ARG</p>
+              <p className="text-xs text-primary-200 mt-0.5">Todo el país</p>
+            </div>
+          </div>
         </div>
 
         {/* Banner vendedor para no logueados */}
