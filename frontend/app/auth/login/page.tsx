@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import GoogleButton from "@/components/ui/GoogleButton";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -82,6 +83,14 @@ export default function LoginPage() {
         <button type="submit" disabled={loading} className="btn-primary mt-2">
           {loading ? "Ingresando..." : "Ingresar"}
         </button>
+
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400 font-medium">o</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        <GoogleButton label="Continuar con Google" />
       </form>
 
       <div className="py-8 text-center">

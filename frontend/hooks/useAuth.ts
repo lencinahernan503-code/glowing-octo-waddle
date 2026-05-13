@@ -9,6 +9,7 @@ interface AuthState {
   register: (data: RegisterData) => Promise<void>;
   becomeSeller: (storeName: string, storeDescription?: string) => Promise<void>;
   setUser: (user: User) => void;
+  setSession: (data: { access_token: string; user: User }) => void;
   logout: () => void;
   hydrate: () => void;
 }
@@ -58,6 +59,12 @@ export const useAuth = create<AuthState>((set) => ({
   setUser: (user) => {
     localStorage.setItem("user", JSON.stringify(user));
     set({ user });
+  },
+
+  setSession: ({ access_token, user }) => {
+    localStorage.setItem("token", access_token);
+    localStorage.setItem("user", JSON.stringify(user));
+    set({ token: access_token, user });
   },
 
   logout: () => {

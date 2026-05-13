@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/layout/BottomNav";
+import GoogleProvider from "@/components/providers/GoogleProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,8 +36,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es">
       <body className={inter.className}>
-        <main className="min-h-screen">{children}</main>
-        <BottomNav />
+        <GoogleProvider>
+          <main className="min-h-screen">{children}</main>
+          <BottomNav />
+        </GoogleProvider>
       </body>
     </html>
   );

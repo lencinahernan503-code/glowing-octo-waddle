@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, File
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 import os, uuid
 from core.database import get_db
 from core.security import hash_password, verify_password, create_access_token
@@ -78,6 +79,46 @@ async def upload_avatar(
     db.commit()
     db.refresh(current_user)
     return UserOut.model_validate(current_user)
+
+
+class GoogleTokenRequest(BaseModel):
+    token: str
+
+@router.post("/google", response_model=Token)
+def google_login(data: GoogleTokenRequest, db: Session = Depends(get_db)):
+    try:
+        from google.oauth2 import id_token
+        from google.auth.transport import requests as google_requests
+        client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+        if not client_id:
+            raise HTTPException(status_code=500, detail="Google OAuth no configurado")
+        info = id_token.verify_oauth2_token(data.token, google_requests.Request(), client_id)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token de Google inválido")
+
+    email = info.get("email")
+    name = info.get("name", email.split("@")[0] if email else "Usuario")
+    if not email:
+        raise HTTPException(status_code=400, detail="No se pudo obtener el email de Google")
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        user = User(
+            email=email,
+            hashed_password=hash_password(uuid.uuid4().hex),
+            full_name=name,
+            role=UserRole.buyer,
+            avatar_url=info.get("picture"),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Cuenta desactivada")
+
+    token = create_access_token({"sub": str(user.id), "role": user.role})
+    return Token(access_token=token, user=UserOut.model_validate(user))
 
 
 @router.post("/login", response_model=Token)
