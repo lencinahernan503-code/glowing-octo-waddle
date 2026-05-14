@@ -98,7 +98,7 @@ export default function ProfilePage() {
           <label className="relative cursor-pointer group">
             <div className="w-16 h-16 rounded-full bg-primary-600 text-white flex items-center justify-center text-xl font-black shadow-lg shadow-primary-200 overflow-hidden">
               {user.avatar_url ? (
-                <Image src={`${API}${user.avatar_url}`} alt={user.full_name} fill className="object-cover rounded-full" sizes="64px" />
+                <Image src={user.avatar_url.startsWith("http") ? user.avatar_url : `${API}${user.avatar_url}`} alt={user.full_name} fill className="object-cover rounded-full" sizes="64px" />
               ) : initials}
             </div>
             <div className={`absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${uploadingAvatar ? "opacity-100" : ""}`}>
