@@ -89,7 +89,7 @@ def google_login(data: GoogleTokenRequest, db: Session = Depends(get_db)):
     try:
         from google.oauth2 import id_token
         from google.auth.transport import requests as google_requests
-        client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+        client_id = settings.GOOGLE_CLIENT_ID
         if not client_id:
             raise HTTPException(status_code=500, detail="Google OAuth no configurado")
         info = id_token.verify_oauth2_token(data.token, google_requests.Request(), client_id)
