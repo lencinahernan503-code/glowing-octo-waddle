@@ -85,17 +85,17 @@ class GoogleTokenRequest(BaseModel):
     token: str
 
 @router.post("/google", response_model=Token)
-def google_login(data: GoogleTokenRequest, db: Session = Depends(get_db)):
-    try:
-        from google.oauth2 import id_token
-        from google.auth.transport import requests as google_requests
-        client_id = settings.GOOGLE_CLIENT_ID
-        if not client_id:
-            raise HTTPException(status_code=500, detail="Google OAuth no configurado")
-        info = id_token.verify_oauth2_token(data.token, google_requests.Request(), client_id)
-    except Exception:
+async def google_login(data: GoogleTokenRequest, db: Session = Depends(get_db)):
+    import httpx
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {data.token}"},
+        )
+    if resp.status_code != 200:
         raise HTTPException(status_code=401, detail="Token de Google inválido")
 
+    info = resp.json()
     email = info.get("email")
     name = info.get("name", email.split("@")[0] if email else "Usuario")
     if not email:
